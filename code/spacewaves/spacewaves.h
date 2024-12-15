@@ -21,17 +21,20 @@
     extern int main();
     extern void main_close();
 
+    // predefined functions for external minigame core
     void minigame_init(){main();};
     void minigame_fixedloop(float deltatime);
     void minigame_loop(float deltatime);
     void minigame_cleanup(){main_close();};
 
+    // entrypoint
     void main_init(){
-        intro();
+        intro(); // play the intro movie first
 
         display_init(
             RESOLUTION_640x480, DEPTH_16_BPP, TRIPLE_BUFFERED, GAMMA_CORRECT_DITHER, FILTERS_RESAMPLE_ANTIALIAS_DEDITHER);
         
+        // if compiled as standalone we need to init the systems ourselves
         #ifdef SPACEWAVES_STANDALONE
         // Initialize most subsystems
         asset_init_compression(2);
@@ -47,8 +50,10 @@
         mixer_init(32);
         #endif
 
+        // random seed using the player's inconsistent input
         register_VI_handler((void(*)())rand);
 
+        // load all the assets and init game entities
         gfx_load();
         timesys_init();
 
@@ -62,11 +67,12 @@
         rdpq_mode_persp(true);
 
         viewport = t3d_viewport_create();
-        station_init(PLAYER_1);
+        station_init(PLAYER_1); // by default player 1's turn is first
         crafts_init(PLAYER_1);
         bonus_init();
         effects_init();
 
+        // to avoid audio clipping issues set all volume to about half
         for(int i = SFX_CHANNEL_MACHINEGUN; i < SFX_CHANNEL_MUSIC; i+=2)
             mixer_ch_set_vol(i, 0.4f, 0.4f);
         for(int i = SFX_CHANNEL_MUSIC; i < 32; i+=2)
@@ -74,7 +80,9 @@
 
     }
 
+    // close the minigame and release its resources
     void main_close(){
+        // close the music player
         if(xmplayeropen){
             xm64player_stop(&xmplayer);
             xm64player_close(&xmplayer);
@@ -82,6 +90,7 @@
         }
         unregister_VI_handler((void(*)())rand);
 
+        // close all the game's entities
         gfx_close();
         world_close();
 
