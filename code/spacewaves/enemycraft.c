@@ -93,7 +93,7 @@ void crafts_botlogic_getinput(enemycraft_t* craft, int index, joypad_inputs_t* o
     // Get the current position of the craft in polar coordinates
     T3DVec3 polarpos = (T3DVec3){{craft->pitchoff, craft->yawoff, craft->distanceoff}};
     T3DVec3 worldpos = gfx_worldpos_from_polar(craft->pitchoff, craft->yawoff, craft->distanceoff);
-    t3d_viewport_calc_viewspace_pos(&viewport, &viewpos);
+    t3d_viewport_calc_viewspace_pos(&viewport, &viewpos, &worldpos);
     
     // Calculate the position of the craft relative to the cursor
     float xpos = viewpos.v[0] - cursorviewpos.v[0];
@@ -308,93 +308,95 @@ void crafts_update(){
                 }
             }
         }
-    }
-}
-
-// Update projectiles (asteroids and rockets) for the current spacecraft
-for(int b = 0; b < MAX_PROJECTILES; b++){
-    // Update asteroids
-    if(crafts[c].arm.asteroids[b].enabled){
-        // Move the asteroid based on its speed
-        crafts[c].arm.asteroids[b].polarpos.v[0] += DELTA_TIME * crafts[c].arm.asteroids[b].xspeed;
-        crafts[c].arm.asteroids[b].polarpos.v[1] += DELTA_TIME * crafts[c].arm.asteroids[b].yspeed;
-        crafts[c].arm.asteroids[b].polarpos.v[2] -= DELTA_TIME * 3.0f; // Move towards the station
-        
-        // Update the visual rotation of the asteroid
-        crafts[c].arm.asteroids[b].rotation += DELTA_TIME;
-        
-        // Check if the asteroid's health is depleted
-        if(crafts[c].arm.asteroids[b].hp <= 0) {
-            crafts[c].arm.asteroids[b].enabled = false; // Disable the asteroid
-            // Create an explosion effect at the asteroid's position
-            effects_add_exp3d(gfx_worldpos_from_polar(
-                crafts[c].arm.asteroids[b].polarpos.v[0],
-                crafts[c].arm.asteroids[b].polarpos.v[1],
-                crafts[c].arm.asteroids[b].polarpos.v[2] * 25), 
-                RGBA32(255,255,255,255));
-            effects_add_rumble(station.currentplayerport, 0.45f);
-            effects_add_shake(0.75f);
-            effects_add_ambientlight(RGBA32(50,50,25,0));
-        }
-        
-        // Check if the asteroid has reached below a certain distance
-        if(crafts[c].arm.asteroids[b].polarpos.v[2] < 2.0f){
-            crafts[c].arm.asteroids[b].enabled = false; // Disable the asteroid
-            // Create an explosion effect at the asteroid's position
-            effects_add_exp3d(gfx_worldpos_from_polar(
-                crafts[c].arm.asteroids[b].polarpos.v[0],
-                crafts[c].arm.asteroids[b].polarpos.v[1],
-                crafts[c].arm.asteroids[b].polarpos.v[2] * 25), 
-                RGBA32(255,255,255,255));
-            effects_add_rumble(station.currentplayerport, 0.75f);
-            effects_add_shake(1.00f);
-            effects_add_ambientlight(RGBA32(50,50,25,0));
-            
-            // Apply damage to the station if the shield is not active
-            float damage = 50;
-            if(!(station.arm.shield > 0.0f && station.arm.shield < 10.0f)){
-                station.hp -= damage; // Reduce station health
-                gamestatus.playerscores[crafts[c].currentplayer] += damage * 40; // Update player score
-            }
-        }
-    }
     
-    // Update rockets
-    if(crafts[c].arm.rockets[b].enabled){
-        // Move the rocket towards the station
-        crafts[c].arm.rockets[b].polarpos.v[2] -= DELTA_TIME * 7.0f;
-        
-        // Check if the rocket's health is depleted
-        if(crafts[c].arm.rockets[b].hp <= 0) {
-            crafts[c].arm.rockets[b].enabled = false; // Disable the rocket
-            // Create an explosion effect at the rocket's position
-            effects_add_exp3d(gfx_worldpos_from_polar(
-                crafts[c].arm.rockets[b].polarpos.v[0],
-                crafts[c].arm.rockets[b].polarpos.v[1],
-                crafts[c].arm.rockets[b].polarpos.v[2] * 25), 
-                RGBA32(255,255,255,255));
-            effects_add_rumble(station.currentplayerport, 0.45f);
-            effects_add_ambientlight(RGBA32(25,25,5,0));
-        }
-        
-        // Check if the rocket has reached below a certain distance
-        if(crafts[c].arm.rockets[b].polarpos.v[2] < 2.0f){
-            crafts[c].arm.rockets[b].enabled = false; // Disable the rocket
-            // Create an explosion effect at the rocket's position
-            effects_add_exp3d(gfx_worldpos_from_polar(
-                crafts[c].arm.rockets[b].polarpos.v[0],
-                crafts[c].arm.rockets[b].polarpos.v[1],
-                crafts[c].arm.rockets[b].polarpos.v[2] * 25), 
-                RGBA32(255,255,255,255));
-            effects_add_rumble(station.currentplayerport, 0.65f);
-            effects_add_shake(1.00f);
-            effects_add_ambientlight(RGBA32(50,50,25,0));
+
+
+        // Update projectiles (asteroids and rockets) for the current spacecraft
+        for(int b = 0; b < MAX_PROJECTILES; b++){
+            // Update asteroids
+            if(crafts[c].arm.asteroids[b].enabled){
+                // Move the asteroid based on its speed
+                crafts[c].arm.asteroids[b].polarpos.v[0] += DELTA_TIME * crafts[c].arm.asteroids[b].xspeed;
+                crafts[c].arm.asteroids[b].polarpos.v[1] += DELTA_TIME * crafts[c].arm.asteroids[b].yspeed;
+                crafts[c].arm.asteroids[b].polarpos.v[2] -= DELTA_TIME * 3.0f; // Move towards the station
+                
+                // Update the visual rotation of the asteroid
+                crafts[c].arm.asteroids[b].rotation += DELTA_TIME;
+                
+                // Check if the asteroid's health is depleted
+                if(crafts[c].arm.asteroids[b].hp <= 0) {
+                    crafts[c].arm.asteroids[b].enabled = false; // Disable the asteroid
+                    // Create an explosion effect at the asteroid's position
+                    effects_add_exp3d(gfx_worldpos_from_polar(
+                        crafts[c].arm.asteroids[b].polarpos.v[0],
+                        crafts[c].arm.asteroids[b].polarpos.v[1],
+                        crafts[c].arm.asteroids[b].polarpos.v[2] * 25), 
+                        RGBA32(255,255,255,255));
+                    effects_add_rumble(station.currentplayerport, 0.45f);
+                    effects_add_shake(0.75f);
+                    effects_add_ambientlight(RGBA32(50,50,25,0));
+                }
+                
+                // Check if the asteroid has reached below a certain distance
+                if(crafts[c].arm.asteroids[b].polarpos.v[2] < 2.0f){
+                    crafts[c].arm.asteroids[b].enabled = false; // Disable the asteroid
+                    // Create an explosion effect at the asteroid's position
+                    effects_add_exp3d(gfx_worldpos_from_polar(
+                        crafts[c].arm.asteroids[b].polarpos.v[0],
+                        crafts[c].arm.asteroids[b].polarpos.v[1],
+                        crafts[c].arm.asteroids[b].polarpos.v[2] * 25), 
+                        RGBA32(255,255,255,255));
+                    effects_add_rumble(station.currentplayerport, 0.75f);
+                    effects_add_shake(1.00f);
+                    effects_add_ambientlight(RGBA32(50,50,25,0));
+                    
+                    // Apply damage to the station if the shield is not active
+                    float damage = 50;
+                    if(!(station.arm.shield > 0.0f && station.arm.shield < 10.0f)){
+                        station.hp -= damage; // Reduce station health
+                        gamestatus.playerscores[crafts[c].currentplayer] += damage * 40; // Update player score
+                    }
+                }
+            }
             
-            // Apply damage to the station if the shield is not active
-            float damage = 65;
-            if(!(station.arm.shield > 0.0f && station.arm.shield < 10.0f)){
-                station.hp -= damage; // Reduce station health
-                gamestatus.playerscores[crafts[c].currentplayer] += damage * 40; // Update player score
+            // Update rockets
+            if(crafts[c].arm.rockets[b].enabled){
+                // Move the rocket towards the station
+                crafts[c].arm.rockets[b].polarpos.v[2] -= DELTA_TIME * 7.0f;
+                
+                // Check if the rocket's health is depleted
+                if(crafts[c].arm.rockets[b].hp <= 0) {
+                    crafts[c].arm.rockets[b].enabled = false; // Disable the rocket
+                    // Create an explosion effect at the rocket's position
+                    effects_add_exp3d(gfx_worldpos_from_polar(
+                        crafts[c].arm.rockets[b].polarpos.v[0],
+                        crafts[c].arm.rockets[b].polarpos.v[1],
+                        crafts[c].arm.rockets[b].polarpos.v[2] * 25), 
+                        RGBA32(255,255,255,255));
+                    effects_add_rumble(station.currentplayerport, 0.45f);
+                    effects_add_ambientlight(RGBA32(25,25,5,0));
+                }
+                
+                // Check if the rocket has reached below a certain distance
+                if(crafts[c].arm.rockets[b].polarpos.v[2] < 2.0f){
+                    crafts[c].arm.rockets[b].enabled = false; // Disable the rocket
+                    // Create an explosion effect at the rocket's position
+                    effects_add_exp3d(gfx_worldpos_from_polar(
+                        crafts[c].arm.rockets[b].polarpos.v[0],
+                        crafts[c].arm.rockets[b].polarpos.v[1],
+                        crafts[c].arm.rockets[b].polarpos.v[2] * 25), 
+                        RGBA32(255,255,255,255));
+                    effects_add_rumble(station.currentplayerport, 0.65f);
+                    effects_add_shake(1.00f);
+                    effects_add_ambientlight(RGBA32(50,50,25,0));
+                    
+                    // Apply damage to the station if the shield is not active
+                    float damage = 65;
+                    if(!(station.arm.shield > 0.0f && station.arm.shield < 10.0f)){
+                        station.hp -= damage; // Reduce station health
+                        gamestatus.playerscores[crafts[c].currentplayer] += damage * 40; // Update player score
+                    }
+                }
             }
         }
     }
@@ -411,7 +413,7 @@ void crafts_draw(){
             // Create an iterator for the enemy craft model
             T3DModelIter it = t3d_model_iter_create(models[ENEMYCRAFT], T3D_CHUNK_TYPE_OBJECT);
             
-            // Set the environment color based on the craft's shield status
+            // Add shield aura if there is any active
             if(crafts[c].arm.shield > 0.0f && crafts[c].arm.shield < 10.0f) 
                 rdpq_set_env_color(RGBA32(0x80,0x80,0xB0,0xFF)); // Light blue for low shield
             else 
@@ -419,9 +421,9 @@ void crafts_draw(){
             
             // Iterate through the model objects
             while(t3d_model_iter_next(&it)){
-                // Check if the object has a material
+                // Manual material setup because reasons
                 if(it.object->material) {
-                    // Set the color combiner and blend mode for the material
+
                     rdpq_mode_combiner(it.object->material->colorCombiner);
                     rdpq_mode_blender(it.object->material->blendMode);
 
@@ -430,9 +432,9 @@ void crafts_draw(){
                     // Disable depth buffer for rendering
                     rdpq_mode_zbuf(false, false);
                     
-                    // Get the texture associated with the material
+                    // Manual texture upload because more reasons
                     T3DMaterialTexture *tex = &(it.object->material->textureA);
-                    // Check if the texture path or reference is valid
+
                     if(tex->texPath || tex->texReference){
                         // Load the texture if it hasn't been loaded yet
                         if(tex->texPath && !tex->texture) 
@@ -456,12 +458,11 @@ void crafts_draw(){
                 rdpq_mode_antialias(AA_STANDARD);
                 // Set the primary color for the craft
                 rdpq_set_prim_color(crafts[c].color);
-                // Synchronize the graphics pipeline to avoid crashes
+                // hardware crash prevention stuff
                 rdpq_sync_pipe(); 
                 rdpq_sync_tile(); 
                 // Draw the current object in the model
                 t3d_model_draw_object(it.object, NULL);
-                // Synchronize again after drawing
                 rdpq_sync_pipe(); 
                 rdpq_sync_tile(); 
             }
@@ -470,7 +471,7 @@ void crafts_draw(){
         }
     }
 
-    // Set ambient light color for the rockets
+    // Set a special ambient light color for the rockets so that they glow naturally
     color_t amb = RGBA32(0xA0, 0xA0, 0xA0, 0xFF);
     t3d_light_set_ambient((uint8_t*)&amb); // Apply ambient light
     t3d_light_set_directional(0, (uint8_t*)&world.sun.color, &world.sun.direction); // Set directional light from the sun
@@ -479,7 +480,7 @@ void crafts_draw(){
     // Retrieve the material and object for the rocket model
     T3DMaterial* mat = t3d_model_get_material(models[ROCKET], "f3d.rocket");
     T3DObject* obj = t3d_model_get_object_by_index(models[ROCKET], 0);
-    t3d_model_draw_material(mat, NULL); // Draw the rocket material
+    t3d_model_draw_material(mat, NULL); // Draw the rocket material once
 
     // Loop through all crafts to draw their projectiles
     for(int c = 0; c < NUM_CRAFTS; c++)
@@ -508,22 +509,22 @@ void crafts_draw(){
                 // Check if the display list for the rocket is not created
                 if(!crafts[c].arm.rocketdl){
                     rspq_block_begin(); // Begin a new display list block
-                    rdpq_sync_pipe(); // Synchronize the rendering pipeline
-                    rdpq_sync_tile(); // Synchronize tile data
+                    rdpq_sync_pipe();
+                    rdpq_sync_tile();
                     
                     // Draw the rocket object
                     t3d_model_draw_object(obj, NULL);
                     
-                    rdpq_sync_pipe(); // Synchronize the rendering pipeline
-                    rdpq_sync_tile(); // Synchronize tile data
+                    rdpq_sync_pipe();
+                    rdpq_sync_tile();
                     
                     crafts[c].arm.rocketdl = rspq_block_end(); // End the display list block and store it
                 } else {
-                    rspq_block_run(crafts[c].arm.rocketdl); // Run the existing display list
+                    rspq_block_run(crafts[c].arm.rocketdl); // Run display list
                 }
                 t3d_matrix_pop(1); // Pop the matrix from the stack
-                rdpq_sync_pipe(); // Synchronize the rendering pipeline
-                rdpq_sync_tile(); // Synchronize tile data
+                rdpq_sync_pipe();
+                rdpq_sync_tile();
             }
         }
 
@@ -586,11 +587,24 @@ void crafts_draw(){
 
 void crafts_close(){
     for(int c = 0; c < NUM_CRAFTS; c++){
+
+        T3DModelIter it = t3d_model_iter_create(models[ENEMYCRAFT], T3D_CHUNK_TYPE_OBJECT);
+        while(t3d_model_iter_next(&it)){
+                if(it.object->material) {
+                    T3DMaterialTexture *tex = &(it.object->material->textureA);
+                    if(tex->texture){
+                        sprite_free(tex->texture);
+                    }
+                }
+        }
+
         if(crafts[c].matx) free_uncached(crafts[c].matx);
         for(int b = 0; b < MAX_PROJECTILES; b++){
             if(crafts[c].arm.rockets[b].matx) free_uncached(crafts[c].arm.rockets[b].matx);
             if(crafts[c].arm.asteroids[b].matx) free_uncached(crafts[c].arm.asteroids[b].matx);
         }
+        if(crafts[c].arm.asteroiddl) rspq_block_free(crafts[c].arm.asteroiddl);
+        if(crafts[c].arm.rocketdl) rspq_block_free(crafts[c].arm.rocketdl);
     }
 
 }

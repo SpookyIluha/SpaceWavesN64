@@ -91,13 +91,13 @@
         unregister_VI_handler((void(*)())rand);
 
         // close all the game's entities
-        gfx_close();
         world_close();
 
         station_close();
         crafts_close();
         bonus_close();
         effects_close();
+        gfx_close();
         
         t3d_destroy();
         display_close();

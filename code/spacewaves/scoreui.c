@@ -75,23 +75,26 @@ void userinterface_draw(){
     heap_stats_t heap_stats;
     sys_get_heap_stats(&heap_stats);
     rdpq_sync_pipe(); // Hardware crashes otherwise
-        rdpq_sync_tile(); // Hardware crashes otherwise
+    rdpq_sync_tile(); // Hardware crashes otherwise
     rdpq_text_printf(&(rdpq_textparms_t){.disable_aa_fix = true}, FONT_TEXT, 20, h - 40, "FPS: %.2f", fps);
     rdpq_text_printf(&(rdpq_textparms_t){.disable_aa_fix = true}, FONT_TEXT, 20, h - 20, "Mem: %d KiB", heap_stats.used/1024);
-rdpq_sync_pipe(); // Hardware crashes otherwise
-        rdpq_sync_tile(); // Hardware crashes otherwise
+    rdpq_sync_pipe(); // Hardware crashes otherwise
+    rdpq_sync_tile(); // Hardware crashes otherwise
     if(gamestatus.state == GAMESTATE_PLAY){
 
         rdpq_set_mode_standard();
         rdpq_set_prim_color(uicolor);
         rdpq_mode_combiner(RDPQ_COMBINER_TEX_FLAT);
         rdpq_mode_alphacompare(5);
+        rdpq_mode_filter(FILTER_BILINEAR);
+        rdpq_mode_antialias(AA_STANDARD);
+        rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
 
-        rdpq_sprite_blit(sprites[spr_ui_crosshair], (w - sprites[spr_ui_crosshair]->width) / 2, (h - sprites[spr_ui_crosshair]->height) / 2, NULL);
+        rdpq_sprite_blit(sprites[spr_ui_crosshair], (w - sprites[spr_ui_crosshair]->width) / 2, (h - sprites[spr_ui_crosshair]->height) / 2, &(rdpq_blitparms_t){.filtering = true});
         worldpos = gfx_worldpos_from_polar(station.pitch, station.yaw, 1000.0f);
         t3d_viewport_calc_viewspace_pos(&viewport, &viewpos, &worldpos);
         xpos = viewpos.v[0]; ypos = viewpos.v[1];
-        rdpq_sprite_blit(sprites[spr_ui_crosshair2], (xpos - sprites[spr_ui_crosshair2]->width / 2), ypos - (sprites[spr_ui_crosshair2]->height / 2), NULL);
+        rdpq_sprite_blit(sprites[spr_ui_crosshair2], (xpos - sprites[spr_ui_crosshair2]->width / 2), ypos - (sprites[spr_ui_crosshair2]->height / 2), &(rdpq_blitparms_t){.filtering = true});
 
         surface_t target = sprite_get_pixels(sprites[spr_ui_target]);
         targinfo.enabled = false;
@@ -99,6 +102,8 @@ rdpq_sync_pipe(); // Hardware crashes otherwise
         rdpq_set_env_color(RGBA32(0xFF,0xFF,0xFF,0xAF));
         rdpq_mode_combiner(RDPQ_COMBINER1((PRIM,ENV,TEX0,ENV),(TEX0,0,ENV,0)));
         rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+        rdpq_mode_filter(FILTER_BILINEAR);
+        rdpq_mode_antialias(AA_STANDARD);
         float Xb = sprites[spr_ui_target]->width / 2;
         float Yb = sprites[spr_ui_target]->height / 2;
 
@@ -201,16 +206,12 @@ rdpq_sync_pipe(); // Hardware crashes otherwise
         rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
         rdpq_mode_dithering(dither);
         rdpq_set_prim_color(RGBA32(50,50,50,50));
+        rdpq_mode_filter(FILTER_BILINEAR);
         rdpq_mode_antialias(AA_STANDARD);
         rdpq_fill_rectangle(500,340,628,468);
         
         for(int i = 0; i < 3; i++){
             if(crafts[i].enabled){
-            /*if(i == 3){
-                rdpq_text_printf(NULL, FONT_TEXT, 100,100, "fwrap %f, yaw %f", fwrap(crafts[i].yawoff + FM_PI, 0, FM_PI * 2), fwrap(crafts[i].pitchoff + FM_PI, 0, FM_PI * 2));
-                rdpq_text_printf(NULL, FONT_TEXT, 100,200, "div %f, yaw %f", fwrap(crafts[i].yawoff + FM_PI, 0, FM_PI * 2) / (float)(FM_PI * 2), fwrap(crafts[i].pitchoff + FM_PI, 0, FM_PI * 2) / (float)(FM_PI * 2));
-                
-            }*/
             rdpq_set_prim_color(gfx_get_playercolor(crafts[i].currentplayer));
             float xp = 500 + t3d_lerp(0,128, fwrap(crafts[i].yawoff + FM_PI, 0, FM_PI * 2) / (float)(FM_PI * 2));
             float yp = 340 + t3d_lerp(0,128, fwrap(crafts[i].pitchoff + FM_PI, 0, FM_PI * 2) / (float)(FM_PI * 2));
@@ -258,6 +259,7 @@ rdpq_sync_pipe(); // Hardware crashes otherwise
         rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
         rdpq_mode_dithering(dither);
         rdpq_set_prim_color(RGBA32(180,140,50,128));
+        rdpq_mode_filter(FILTER_BILINEAR);
         rdpq_mode_antialias(AA_STANDARD);
         if(gamestatus.state == GAMESTATE_TRANSITION || gamestatus.state == GAMESTATE_FINISHED)
             rdpq_set_prim_color(RGBA32(0,0,0, t3d_lerp(128,255, fclampr(1 - (gamestatus.statetime * 0.2), 0,1))));

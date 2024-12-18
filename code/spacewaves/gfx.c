@@ -60,7 +60,6 @@ const char *texture_path[SPRITE_COUNT] = {
     "rom://spacewaves/machinegun_new_04.ci4.sprite"
 };
 
-
 T3DViewport viewport;
 surface_t* framebuffer;
 surface_t* zbuffer;

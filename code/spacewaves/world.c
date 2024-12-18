@@ -27,7 +27,6 @@ inline int randr(int min, int max){
 }
 
 void world_reinit(){
-  bool overflow = true;
   world.space.main = RGBA32(randm(180), randm(180),randm(180), 0xFF);
   world.space.back = RGBA32(randm(180), randm(180),randm(180), 0xFF);
   world.space.stars = RGBA32(randr(200, 255), randr(200, 255), randr(200, 255), 0xFF);
@@ -76,6 +75,10 @@ void world_close(){
   for(int i = 0; i < PLANETS_MAX; i++){
     if(world.planets[i].modelMatFP) free_uncached(world.planets[i].modelMatFP);
   }
+  if(world.space.dlblock) rspq_block_free(world.space.dlblock);
+  for(int p = 0; p < PLANETS_MAX; p++)
+    if(world.planets[p].dlblock)
+      rspq_block_free(world.planets[p].dlblock);
 }
 
 void world_draw(){
@@ -165,10 +168,10 @@ void world_draw(){
             if(!world.planets[p].dlblock){
                 rspq_block_begin();
                 rdpq_sync_pipe(); // Hardware crashes otherwise
-        rdpq_sync_tile(); // Hardware crashes otherwise
+                rdpq_sync_tile(); // Hardware crashes otherwise
                 t3d_model_draw_object(obj, NULL);
-rdpq_sync_pipe(); // Hardware crashes otherwise
-        rdpq_sync_tile(); // Hardware crashes otherwise
+                rdpq_sync_pipe(); // Hardware crashes otherwise
+                rdpq_sync_tile(); // Hardware crashes otherwise
                 if(rand() % 2){
                     mat = t3d_model_get_material(models[i], "f3d.planetrings");
                     obj = t3d_model_get_object_by_index(models[i], 1);
@@ -178,10 +181,10 @@ rdpq_sync_pipe(); // Hardware crashes otherwise
                       (ENV, 0, SHADE, 0), 		(ENV,0,TEX0,0)));
                     rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
                     rdpq_sync_pipe(); // Hardware crashes otherwise
-        rdpq_sync_tile(); // Hardware crashes otherwise
+                    rdpq_sync_tile(); // Hardware crashes otherwise
                     t3d_model_draw_object(obj, NULL);
-rdpq_sync_pipe(); // Hardware crashes otherwise
-        rdpq_sync_tile(); // Hardware crashes otherwise
+                    rdpq_sync_pipe(); // Hardware crashes otherwise
+                    rdpq_sync_tile(); // Hardware crashes otherwise
                     mat = t3d_model_get_material(models[i], "f3d.planet");
                     obj = t3d_model_get_object_by_index(models[i], 0);
                     t3d_model_draw_material(mat, NULL);
@@ -193,6 +196,7 @@ rdpq_sync_pipe(); // Hardware crashes otherwise
                     rdpq_mode_blender(RDPQ_BLENDER(
                       (FOG_RGB, IN_ALPHA, IN_RGB, INV_MUX_ALPHA)));
                     rdpq_set_blend_color(world.planets[p].city);
+                    rdpq_mode_antialias(AA_STANDARD);
                 }
                 world.planets[p].dlblock = rspq_block_end();
             } else rspq_block_run(world.planets[p].dlblock);
@@ -216,9 +220,9 @@ void world_draw_lensflare(){
     else world.sun.lensflarealpha = t3d_lerp(world.sun.lensflarealpha, 0.0f, 0.4f);
 
     if(world.sun.lensflarealpha > 25.0f){
-      //uint16_t* pixels = zbuffer->buffer;
-      //uint16_t depth = pixels[(int)ypos * zbuffer->width + (int)xpos];
-      //if(depth > 0x8000){
+        //uint16_t* pixels = zbuffer->buffer;
+        //uint16_t depth = pixels[(int)ypos * zbuffer->width + (int)xpos];
+        //if(depth > 0x8000){
         rdpq_set_mode_standard();
         rdpq_mode_dithering(dither);
         rdpq_mode_filter(FILTER_BILINEAR);
