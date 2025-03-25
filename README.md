@@ -1,6 +1,8 @@
-# N64brew Game Jam 2024 Entry - SpaceWaves
+# N64brew Game Jam 2024 Silver Winner - SpaceWaves
 
 ![boxart](https://github.com/user-attachments/assets/50a28a3e-2734-4f4c-9bd0-15fcf4a895d2)
+
+The [results](https://itch.io/jam/n64brew-game-jam-5) of the N64Brew GameJam #5 are here, and this entry won the second place, scoring 102 points of votes!
 
 ### SpaceWaves
 
